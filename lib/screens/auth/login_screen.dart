@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/Services/authServices.dart';
 import 'package:myapp/screens/auth/signup_screen.dart';
 import 'package:myapp/navigation/bottom_nav.dart';
+import 'package:myapp/screens/home/physio_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -174,22 +176,52 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             StreamBuilder<User?>(
-              stream: _authStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasData) {
-                  // User is signed in, navigate to bottom nav screen
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const BottomNavScreen()),
-                    );
-                  });
-                }
-                return const SizedBox();  // No user logged in yet, stay on login screen
-              },
-            ),
+  stream: _authStream,
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    } else if (snapshot.hasData) {
+      User? user = snapshot.data;
+      if (user != null) {
+        if (user.isAnonymous) {
+          // ✅ Directly navigate anonymous users to BottomNavScreen
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BottomNavScreen()),
+            );
+          });
+        } else {
+          // ✅ Fetch user role from Firestore for registered users
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get()
+              .then((DocumentSnapshot userDoc) {
+            if (userDoc.exists) {
+              String role = userDoc['role'];
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => role == 'physiotherapist'
+                        ? PhysioScreen()
+                        : const BottomNavScreen(),
+                  ),
+                );
+              });
+            }
+          }).catchError((error) {
+            debugPrint("Error fetching user role: $error");
+          });
+        }
+      }
+    }
+    return const SizedBox(); // No user logged in yet, stay on login screen
+  },
+),
+
+
           ],
         ),
       ),

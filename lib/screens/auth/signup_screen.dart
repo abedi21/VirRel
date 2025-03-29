@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:myapp/Services/authServices.dart';
 import 'package:myapp/navigation/bottom_nav.dart';
 import 'package:myapp/screens/auth/login_screen.dart';
+import 'package:myapp/screens/home/physio_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -12,9 +13,16 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  String _selectedRole = 'user';  // Default role
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _licenseNumberController = TextEditingController();
+  final TextEditingController _specializationController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+
   final AuthServices _authServices = AuthServices();
 
   String? _errorMessage;
@@ -22,6 +30,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // Validate form inputs
   bool _validateInputs() {
+    if (_fullNameController.text.isEmpty) {
+      setState(() => _errorMessage = "Full name is required");
+      return false;
+    }
     if (_emailController.text.isEmpty) {
       setState(() => _errorMessage = "Email is required");
       return false;
@@ -42,6 +54,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _errorMessage = "Passwords do not match");
       return false;
     }
+    if (_selectedRole == 'physiotherapist') {
+      if (_licenseNumberController.text.isEmpty || _specializationController.text.isEmpty || _locationController.text.isEmpty) {
+        setState(() => _errorMessage = "Please fill all the physiotherapist details");
+        return false;
+      }
+    }
     return true;
   }
 
@@ -55,18 +73,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      await _authServices.registerWithEmail(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-
-      // Navigate to home screen after successful registration
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const BottomNavScreen()),
-          (route) => false, // Removes all previous routes from the stack
+      // Register based on selected role
+      if (_selectedRole == 'physiotherapist') {
+        await _authServices.registerWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text,
+          _fullNameController.text.trim(),
+          _selectedRole,
+          licenseNumber: _licenseNumberController.text.trim(),
+          specialization: _specializationController.text.trim(),
+          location: _locationController.text.trim(),
+        );
+      } else {
+        await _authServices.registerWithEmail(
+          _emailController.text.trim(),
+          _passwordController.text,
+          _fullNameController.text.trim(),
+          _selectedRole,
         );
       }
+
+      // Navigate to home screen after successful registration
+     if (mounted) {
+  if (_selectedRole == 'physiotherapist') {
+    // Navigate to a specific screen for physiotherapists (you can replace 'PhysioDashboardScreen()' with your desired screen)
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => PhysioScreen()),//physioScreen
+       // Removes all previous routes from the stack
+    );
+  } else {
+    // Navigate to the BottomNavScreen for other users
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) =>  const BottomNavScreen()),
+      // Removes all previous routes from the stack
+    );
+  }
+}
 
     } catch (e) {
       setState(() {
@@ -109,6 +151,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Full Name Input Field
+            AuthTextField(
+              controller: _fullNameController,
+              labelText: "Full Name",
+              prefixIcon: Icons.person,
+            ),
+            const SizedBox(height: 12),
             AuthTextField(
               controller: _emailController,
               labelText: "Email",
@@ -129,6 +178,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: true,
             ),
             const SizedBox(height: 20),
+
+            // Radio buttons for role selection
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Radio<String>(
+                  value: 'user',
+                  groupValue: _selectedRole,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRole = value!;
+                    });
+                  },
+                ),
+                const Text('User', style: TextStyle(color: Colors.white)),
+                Radio<String>(
+                  value: 'physiotherapist',
+                  groupValue: _selectedRole,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRole = value!;
+                    });
+                  },
+                ),
+                const Text('Physiotherapist', style: TextStyle(color: Colors.white)),
+              ],
+            ),
+
+            // Additional fields for Physiotherapist role
+            if (_selectedRole == 'physiotherapist') ...[
+              const SizedBox(height: 12),
+              AuthTextField(
+                controller: _licenseNumberController,
+                labelText: "License Number",
+                prefixIcon: Icons.badge,
+              ),
+              const SizedBox(height: 12),
+              AuthTextField(
+                controller: _specializationController,
+                labelText: "Specialization",
+                prefixIcon: Icons.school,
+              ),
+              const SizedBox(height: 12),
+              AuthTextField(
+                controller: _locationController,
+                labelText: "Location",
+                prefixIcon: Icons.location_on,
+              ),
+            ],
+
             if (_errorMessage != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
