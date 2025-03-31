@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/exercise_card.dart';
+import 'strength_training_screen.dart';
+import 'stretching_screen.dart';
+import 'yoga_screen.dart';
 
 class ExercisesScreen extends StatelessWidget {
   final List<Map<String, String>> exercises = [
@@ -19,10 +22,24 @@ class ExercisesScreen extends StatelessWidget {
         child: ListView.builder(
           itemCount: exercises.length,
           itemBuilder: (context, index) {
-            return ExerciseCard(
-              title: exercises[index]["title"]!,
-              image: exercises[index]["image"]!,
-            );
+            return GestureDetector(
+  onTap: () {
+  String title = exercises[index]["title"]!;
+  if (title == "Strength Training") {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => StrengthTrainingScreen()));
+  } else if (title == "Stretching") {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => StretchingScreen()));
+  } else if (title == "Yoga") {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => YogaScreen()));
+  }
+},
+
+  child: ExerciseCard(
+    title: exercises[index]["title"]!,
+    image: exercises[index]["image"]!,
+  ),
+);
+
           },
         ),
       ),
