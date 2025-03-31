@@ -1,49 +1,60 @@
 import 'package:flutter/material.dart';
+import 'exercise_detail_screen.dart';
 
 class StretchingScreen extends StatelessWidget {
-  final List<Map<String, String>> stretchingExercises = [
+  final List<Map<String, dynamic>> stretches = [
     {
-      "title": "Neck Stretch",
-      "muscle": "Neck",
+      "name": "Hamstring Stretch",
+      "description": "Improves flexibility in the hamstrings.",
+      "reps": "Hold for 20 seconds",
+      "sets": "3 sets each leg",
+      "steps": [
+        "Stand upright and extend one leg forward.",
+        "Keep it straight on a surface and bend forward.",
+        "Feel the stretch in the back of your thigh.",
+      ]
     },
     {
-      "title": "Hamstring Stretch",
-      "muscle": "Hamstrings",
-    },
-    {
-      "title": "Quad Stretch",
-      "muscle": "Quadriceps",
-    },
-    {
-      "title": "Shoulder Stretch",
-      "muscle": "Shoulders",
-    },
-    {
-      "title": "Lower Back Stretch",
-      "muscle": "Lower Back",
+      "name": "Quad Stretch",
+      "description": "Stretches the front thigh muscles.",
+      "reps": "Hold for 30 seconds",
+      "sets": "2 sets each leg",
+      "steps": [
+        "Stand on one foot, pull the opposite foot toward your glutes.",
+        "Keep your knees close together.",
+        "Hold for the set time and switch legs.",
+      ]
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Stretching")),
+      appBar: AppBar(title: Text("Stretching Exercises")),
       body: ListView.builder(
-        padding: EdgeInsets.all(16),
-        itemCount: stretchingExercises.length,
+        itemCount: stretches.length,
         itemBuilder: (context, index) {
-          final exercise = stretchingExercises[index];
+          final ex = stretches[index];
           return Card(
-            margin: EdgeInsets.symmetric(vertical: 8),
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            margin: EdgeInsets.all(10),
             child: ListTile(
-              leading: Icon(Icons.accessibility_new, color: Colors.green),
-              title: Text(exercise["title"]!,
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text("Target: ${exercise["muscle"]}"),
+              title: Text(ex["name"] as String),
+              subtitle: Text(ex["description"] as String),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ExerciseDetailScreen(
+                      name: ex["name"] as String,
+                      description: ex["description"] as String,
+                      reps: ex["reps"] as String,
+                      sets: ex["sets"] as String,
+                      steps: List<String>.from(ex["steps"] as List),
+                    ),
+                  ),
+                );
+              },
             ),
           );
         },
